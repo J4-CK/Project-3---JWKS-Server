@@ -7,8 +7,23 @@ import json
 import jwt
 import datetime
 
+#project 2
+import sqlite3
+
 hostName = "localhost"
 serverPort = 8080
+
+#project 2
+#Open or create SQLite database file
+db_connection = sqlite3.connect("totally_not_my_privateKeys.db")
+db_cursor = db_connection.cursor()
+
+#Create keys table if it does not exist
+db_cursor.execute('''CREATE TABLE IF NOT EXISTS keys(
+                    kid INTEGER PRIMARY KEY AUTOINCREMENT,
+                    key BLOB NOT NULL,
+                    exp INTEGER NOT NULL
+                    )''')
 
 private_key = rsa.generate_private_key(
     public_exponent=65537,
