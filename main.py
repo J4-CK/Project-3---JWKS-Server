@@ -25,6 +25,7 @@ db_cursor.execute('''CREATE TABLE IF NOT EXISTS keys(
                     exp INTEGER NOT NULL
                     )''')
 
+#Generate private keys
 private_key = rsa.generate_private_key(
     public_exponent=65537,
     key_size=2048,
@@ -34,18 +35,13 @@ expired_key = rsa.generate_private_key(
     key_size=2048,
 )
 
-pem = private_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
-)
-expired_pem = expired_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
-)
+pem = private_key.private_bytes(encoding=serialization.Encoding.PEM,
+                                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                                encryption_algorithm=serialization.NoEncryption())
 
-numbers = private_key.private_numbers()
+expired_pem = expired_key.private_bytes(encoding=serialization.Encoding.PEM,
+                                         format=serialization.PrivateFormat.TraditionalOpenSSL,
+                                         encryption_algorithm=serialization.NoEncryption())
 
 
 def int_to_base64(value):
@@ -58,6 +54,14 @@ def int_to_base64(value):
     encoded = base64.urlsafe_b64encode(value_bytes).rstrip(b'=')
     return encoded.decode('utf-8')
 
+# Function to store keys in the database
+def store_key_in_db(key, exp):
+    db_cursor.execute("INSERT INTO keys(key, exp) VALUES (?, ?)", (key, exp))
+    db_connection.commit()
+
+# Store private keys in the database
+store_key_in_db(pem, datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+store_key_in_db(expired_pem, datetime.datetime.utcnow() - datetime.timedelta(hours=1))
 
 class MyServer(BaseHTTPRequestHandler):
     def do_PUT(self):
