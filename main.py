@@ -88,25 +88,32 @@ class MyServer(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
         if parsed_path.path == "/auth":
-            headers = {
-                "kid": "goodKID"
-            }
-            token_payload = {
-                "user": "username",
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-            }
+            headers = {"kid": "goodKID"}
+            token_payload = {"user": "username", "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
+
+            # Check if "expired" query parameter is present
             if 'expired' in params:
                 headers["kid"] = "expiredKID"
-                token_payload["exp"] = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-            encoded_jwt = jwt.encode(token_payload, pem, algorithm="RS256", headers=headers)
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(bytes(encoded_jwt, "utf-8"))
-            return
+                # Retrieve expired key from database
+                db_cursor.execute("SELECT key FROM keys WHERE exp < ?", (datetime.datetime.utcnow(),))
+                key_data = db_cursor.fetchone()
+            else:
+                # Retrieve valid (unexpired) key from database
+                db_cursor.execute("SELECT key FROM keys WHERE exp >= ?", (datetime.datetime.utcnow(),))
+                key_data = db_cursor.fetchone()
+
+            if key_data:
+                private_key = serialization.load_pem_private_key(key_data[0], password=None)
+                encoded_jwt = jwt.encode(token_payload, private_key, algorithm="RS256", headers=headers)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(bytes(encoded_jwt, "utf-8"))
+                return
 
         self.send_response(405)
         self.end_headers()
         return
+
 
     def do_GET(self):
         if self.path == "/.well-known/jwks.json":
