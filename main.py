@@ -115,28 +115,28 @@ class MyServer(BaseHTTPRequestHandler):
         return
 
 
-    def do_GET(self):
-        if self.path == "/.well-known/jwks.json":
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            keys = {
-                "keys": [
-                    {
-                        "alg": "RS256",
-                        "kty": "RSA",
-                        "use": "sig",
-                        "kid": "goodKID",
-                        "n": int_to_base64(numbers.public_numbers.n),
-                        "e": int_to_base64(numbers.public_numbers.e),
-                    }
-                ]
-            }
-            self.wfile.write(bytes(json.dumps(keys), "utf-8"))
-            return
-
-        self.send_response(405)
+def do_GET(self):
+    if self.path == "/.well-known/jwks.json":
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
         self.end_headers()
+        keys = {
+            "keys": []
+        }
+        # Retrieve valid (non-expired) keys from database
+        db_cursor.execute("SELECT key, kid FROM keys WHERE exp >= ?", (datetime.datetime.utcnow(),))
+        rows = db_cursor.fetchall()
+        for row in rows:
+            key_dict = {
+                "alg": "RS256",
+                "kty": "RSA",
+                "use": "sig",
+                "kid": f"key_{row[1]}",
+                "n": int_to_base64(row[0].public_numbers().n),
+                "e": int_to_base64(row[0].public_numbers().e),
+            }
+            keys["keys"].append(key_dict)
+        self.wfile.write(bytes(json.dumps(keys), "utf-8"))
         return
 
 
