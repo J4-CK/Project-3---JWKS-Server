@@ -1,5 +1,9 @@
 import unittest
 import requests
+import coverage
+
+# Create a coverage object
+cov = coverage.Coverage()
 
 class TestJWKS(unittest.TestCase):
     BASE_URL = 'http://localhost:8080'
@@ -15,4 +19,14 @@ class TestJWKS(unittest.TestCase):
         self.assertIn('keys', response.json())
 
 if __name__ == '__main__':
+    # Start coverage measurement
+    cov.start()
+
+    # Run the test suite
     unittest.main()
+
+    # Stop coverage measurement
+    cov.stop()
+
+    # Report coverage
+    cov.report()
