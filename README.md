@@ -1,6 +1,4 @@
-# Project-3---JWKS-Server
-JWKS Server with SQLite Database
-This is a Python-based JSON Web Key Set (JWKS) server with SQLite database integration. It allows you to serve public keys with expiry and unique key identifiers (kid) for verifying JSON Web Tokens (JWTs). The server stores private keys in an SQLite database, ensuring persistence and availability even after server restarts.
+This Python-based JSON Web Key Set (JWKS) server integrates SQLite database functionality. It serves public keys with expiration dates and unique key identifiers (kid) for verifying JSON Web Tokens (JWTs). The server securely stores private keys in an SQLite database, ensuring persistence and availability even after server restarts.
 
 Requirements
 Python 3.x
@@ -14,19 +12,18 @@ jwt
 sqlite3
 Usage
 Installation:
-
 Ensure you have Python 3.x installed on your system.
 Install the required Python packages listed above using pip install <package_name>.
 Running the Server:
-
 Open a terminal or command prompt.
-Navigate to the directory containing the my_server.py file.
+Navigate to the directory containing the main.py file.
 Run the server by executing the command:
+bash
 Copy code
-python my_server.py
+python main.py
 The server will start running on localhost at port 8080 by default.
-Endpoints:
 
+Endpoints:
 Authentication Endpoint (/auth):
 
 Sends a JWT signed with a private key stored in the database.
@@ -38,9 +35,7 @@ Retrieves valid (non-expired) public keys from the database and serves them as a
 To retrieve the JWKS, send a GET request to /.well-known/jwks.json.
 Example: GET http://localhost:8080/.well-known/jwks.json
 Database:
-
 The server uses an SQLite database named totally_not_my_privateKeys.db to store private keys.
-The database file will be automatically created in the same directory where the server script (my_server.py) is located.
+The database file will be automatically created in the same directory where the server script (main.py) is located.
 Testing:
-
 Use tools like cURL, Postman, or your preferred HTTP client to send requests to the server and test its functionality.
