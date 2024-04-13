@@ -96,32 +96,33 @@ def register_user(username, email):
 class MyServer(BaseHTTPRequestHandler):
     # Implement other methods as before
 
-    def do_PUT(self):
-        self.send_response(405)
-        self.end_headers()
-        return
-
-    def do_PATCH(self):
-        self.send_response(405)
-        self.end_headers()
-        return
-
-    def do_DELETE(self):
-        self.send_response(405)
-        self.end_headers()
-        return
-
-    def do_HEAD(self):
-        self.send_response(405)
-        self.end_headers()
-        return
+    # Implement a rate limiter for POST:/auth endpoint
+    AUTH_REQUESTS = {}
+    RATE_LIMIT = 10  # Limit requests to 10 per second
 
     def do_POST(self):
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
         if parsed_path.path == "/auth":
+            # Implement rate limiter
+            request_ip = self.client_address[0]
+            current_time = datetime.datetime.now().timestamp()
+
+            if request_ip not in self.AUTH_REQUESTS:
+                self.AUTH_REQUESTS[request_ip] = [current_time]
+            else:
+                request_times = self.AUTH_REQUESTS[request_ip]
+                request_times = [t for t in request_times if current_time - t < 1]
+                if len(request_times) >= self.RATE_LIMIT:
+                    self.send_response(429)
+                    self.end_headers()
+                    return
+                else:
+                    request_times.append(current_time)
+                    self.AUTH_REQUESTS[request_ip] = request_times
+            
             # Log authentication requests
-            self.log_authentication_request(self.client_address[0])
+            self.log_authentication_request(request_ip)
             
             # Implement authentication logic
             pass
