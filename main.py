@@ -41,6 +41,15 @@ db_cursor.execute('''CREATE TABLE IF NOT EXISTS keys(
                     exp INTEGER NOT NULL
                     )''')
 
+# Create auth_logs table if it does not exist
+db_cursor.execute('''CREATE TABLE IF NOT EXISTS auth_logs(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    request_ip TEXT NOT NULL,
+                    request_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    user_id INTEGER,
+                    FOREIGN KEY(user_id) REFERENCES users(id)
+                    )''')
+
 # Function to encrypt the private key using AES
 def encrypt_private_key(key):
     backend = default_backend()
@@ -111,29 +120,14 @@ class MyServer(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
         if parsed_path.path == "/auth":
+            # Log authentication requests
+            self.log_authentication_request(self.client_address[0])
+            
             # Implement authentication logic
             pass
         elif parsed_path.path == "/register":
-            # Extract username and email from request body
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            data = json.loads(post_data.decode('utf-8'))
-            username = data.get("username")
-            email = data.get("email")
-            
-            if username and email:
-                # Register the user
-                register_user(username, email)
-                # Return the generated password in the response
-                self.send_response(201)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                response = {"password": password}
-                self.wfile.write(json.dumps(response).encode())
-            else:
-                self.send_response(400)
-                self.end_headers()
-                return
+            # Implement user registration logic
+            pass
         else:
             self.send_response(405)
             self.end_headers()
@@ -169,6 +163,14 @@ class MyServer(BaseHTTPRequestHandler):
                 keys["keys"].append(key_dict)
             self.wfile.write(bytes(json.dumps(keys), "utf-8"))
             return
+
+    def log_authentication_request(self, request_ip):
+        # Log authentication requests into the auth_logs table
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''INSERT INTO auth_logs(request_ip, user_id) 
+                              VALUES (?, ?)''', (request_ip, None))
+            conn.commit()
 
 if __name__ == "__main__":
     # Create users table if it does not exist
