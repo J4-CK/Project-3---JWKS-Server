@@ -1,4 +1,4 @@
-# Project-2---JWKS-Server
+# Project-3---JWKS-Server
 JWKS Server with SQLite Database
 This is a Python-based JSON Web Key Set (JWKS) server with SQLite database integration. It allows you to serve public keys with expiry and unique key identifiers (kid) for verifying JSON Web Tokens (JWTs). The server stores private keys in an SQLite database, ensuring persistence and availability even after server restarts.
 
